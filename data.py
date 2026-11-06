@@ -1,66 +1,53 @@
-import time
-start_time = time.perf_counter()
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.io as sio
+"""Data ingestion and preprocessing module for quantitative finance pipeline.
+
+Handles downloading, caching, and cleaning historical asset pricing data from
+Yahoo Finance."""
+# ==========================================
+# 1. IMPORTS
+# ==========================================
 import yfinance as yf
-import seaborn as sns
 import pandas as pd
 import os
-from functools import wraps
 
-
-#decorator function for measuring runtime
-def timeit(func):
-    @wraps(func)  # Keeps the original function's name and documentation intact
-    def wrapper(*args, **kwargs):
-        # 1. Record start time using high-precision clock
-        start = time.perf_counter()
-
-        # 2. Call the actual function you decorated
-        result = func(*args, **kwargs)
-
-        # 3. Record end time and calculate elapsed duration
-        end = time.perf_counter()
-        print(f"[{func.__name__}] finished in {end - start:.4f} seconds")
-
-        # 4. Return the original function's result so your code doesn't break
-        return result
-
-    return wrapper
-
-#get 5 year data of Amazon tickr "AMZN" from yfinance and store it locally
+# ==========================================
+# 2. Configuration global variables
+# ==========================================
 ticker = "AMZN"
-data_file = f"{ticker}_prices.pkl"
-refresh_pkl = False
-if os.path.exists(data_file) and refresh_pkl != True:
-    dat = pd.read_pickle(data_file)
-else:
-    dat = yf.download(ticker, start="2021-11-05", end="2026-11-05")
-    dat.to_pickle(data_file)
+start = "2021-11-05"
+end = "2026-11-05"
+refresh = False
 
-print(dat.empty)
-print(dat.info())
-print(dat.head())
 
-close_price = dat["Close", ticker]
-dat["50_day_avarage"] = close_price.rolling(window=50).mean()
+# ==========================================
+# 3. Core function
+# ==========================================
+def get_data(ticker: str, start: str, end: str, refresh: bool) -> pd.DataFrame:
+    """Gets data from yfinance and returns them in a database.
 
-#plot the closing prices and the 50-day moving avarage
-sns.set_theme(style="darkgrid")
-plt.figure(figsize=(12,6))
-plt.plot(dat.index, close_price, label="Closing Price", linewidth=1.5)
-plt.plot(dat.index, dat["50_day_avarage"], label="50Day avarage", linewidth=1.5)
-plt.title(f"{ticker} Closing price from 2021-11-05 to 2026-11-05 with 50-day moving avarage")
-plt.xlabel("Date")
-plt.ylabel("Price in USD")
-plt.legend()
-plt.tight_layout()
+    Parameters:
+        ticker (str): Fetches the desired financial data based on the ticker.
+        start (str): Start date of the data to get.
+        end (str): End date of the data to get (end not included).
+        refresh (bool): Should the local .pkl file be refreshed.
 
-#end runtime measurement and print result
-end_time = time.perf_counter()
-print(f"\nExecution time: {end_time - start_time:.4f} seconds")
+    Returns:
+        pd.DataFrame: Returns database as a pandas DataFrame.
+    """
+    data_file = f"{ticker}_prices.pkl"
+    if os.path.exists(data_file) and  refresh != True:
+        dat = pd.read_pickle(data_file)
+    else:
+        dat = yf.download(ticker, start=f"{start}", end=f"{end}")
+        dat.to_pickle(data_file)
 
-#show plot after measuring runtime to avoid any blocking of the running of the previous
-plt.show()
+    if isinstance(dat.columns, pd.MultiIndex):
+        dat.columns = dat.columns.get_level_values(0)
 
+    print(dat.empty)
+    print(dat.info())
+    print(dat.head())
+
+    close_price = dat["Close"]
+    dat["50_day_average"] = close_price.rolling(window=50).mean()
+
+    return dat
