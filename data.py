@@ -10,16 +10,7 @@ import pandas as pd
 import os
 
 # ==========================================
-# 2. Configuration global variables
-# ==========================================
-ticker = "AMZN"
-start = "2021-11-05"
-end = "2026-11-05"
-refresh = False
-
-
-# ==========================================
-# 3. Core function
+# 2. Core function
 # ==========================================
 def get_data(ticker: str, start: str, end: str, refresh: bool) -> pd.DataFrame:
     """Gets data from yfinance and returns them in a database.
@@ -43,9 +34,9 @@ def get_data(ticker: str, start: str, end: str, refresh: bool) -> pd.DataFrame:
     if isinstance(dat.columns, pd.MultiIndex):
         dat.columns = dat.columns.get_level_values(0)
 
-    print(dat.empty)
+    """    print(dat.empty)
     print(dat.info())
-    print(dat.head())
+    print(dat.head())"""
 
     close_price = dat["Close"]
     dat["50_day_average"] = close_price.rolling(window=50).mean()
