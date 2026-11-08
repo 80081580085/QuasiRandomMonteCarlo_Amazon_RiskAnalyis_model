@@ -24,21 +24,18 @@ def get_data(ticker: str, start: str, end: str, refresh: bool) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Returns database as a pandas DataFrame.
     """
-    data_file = f"{ticker}_prices.pkl"
+    data_file = f"{ticker, start, end}_prices.pkl"
     if os.path.exists(data_file) and  refresh != True:
         dat = pd.read_pickle(data_file)
     else:
         dat = yf.download(ticker, start=f"{start}", end=f"{end}")
         dat.to_pickle(data_file)
+    if dat is None or dat.empty:
+        raise ValueError(f"No data found for {ticker} form {start} to {end}!")
+
 
     if isinstance(dat.columns, pd.MultiIndex):
         dat.columns = dat.columns.get_level_values(0)
 
-    """    print(dat.empty)
-    print(dat.info())
-    print(dat.head())"""
-
-    close_price = dat["Close"]
-    dat["50_day_average"] = close_price.rolling(window=50).mean()
 
     return dat
