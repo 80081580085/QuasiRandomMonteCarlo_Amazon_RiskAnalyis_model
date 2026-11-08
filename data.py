@@ -12,7 +12,7 @@ import os
 # ==========================================
 # 2. Core function
 # ==========================================
-def get_data(ticker: str, start: str, end: str, refresh: bool) -> pd.DataFrame:
+def get_data(ticker: str, start: str, end: str, refresh: bool=False) -> pd.DataFrame:
     """Gets data from yfinance and returns them in a database.
 
     Parameters:
